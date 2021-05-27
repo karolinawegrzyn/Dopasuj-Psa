@@ -1,4 +1,5 @@
 //Karolina Węgrzyn, Łukasz Szczepaniak
+//aby kompilacja sie udala nalezy dodac JUnit4 to classpath (inaczej testy się nie skompilują)
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
