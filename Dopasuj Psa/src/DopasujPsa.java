@@ -9,12 +9,31 @@ import java.util.Random;
 import javax.swing.*;
 import javax.swing.JFrame;
 
-//zgodnie z zasadami SOLID tworzymy 3 klasy - każda odpowiada za jedną rzecz
-class Pies {
-    private String nazwa;
-    private String opis;
-    private String[] klucz_odpowiedzi;
+//zgodnie z zasadą S tworzymy 3 klasy - każda odpowiada za jedną rzecz
+//stworzy klasę abstrakcyjną Zwierze, która będzie otwarta na rozszerzenia i zamknięta na modyfikacje
+//mozna np stworzyc kota
 
+abstract class Zwierze {
+    public String nazwa;
+    public String opis;
+    public String[] klucz_odpowiedzi;
+
+    public String getNazwa(){
+        return nazwa;
+    }
+    public String getOpis(){
+        return opis;
+    }
+    public String getKlucz_odpowiedzi(int i){
+        return klucz_odpowiedzi[i];
+    }
+    public void setOpis(String nowyOpis){
+        opis = nowyOpis;
+    }
+}
+
+//zgodnosc metod z klasa bazową (zasada L)
+class Pies extends Zwierze{
     Pies(String n, String o, String[] klucz_odp) {          //konstruktor
         if (n.isEmpty() || o.isEmpty())
             throw new IllegalArgumentException();
@@ -22,56 +41,41 @@ class Pies {
         opis = o;
         klucz_odpowiedzi = klucz_odp;
     }
-
-    String getNazwa(){
-        return nazwa;
-    }
-
-    String getOpis(){
-        return opis;
-    }
-
-    String getKlucz_odpowiedzi(int i){
-        return klucz_odpowiedzi[i];
-    }
-
-    void setOpis(String nOpis){
-        opis = nOpis;
-    }
 }
 
 //korzystamy z Singletona, gdyż tworzymy tylko jeden obiekt tego typu (mamy jedną baze)
-class BazaPsow {
-    private static final BazaPsow instance = new BazaPsow();
-    public static BazaPsow getInstance() {
+//argumenty funkcji to klasy abstrakcyjne - nie konkretny typ (zasada D)
+class Baza {
+    private static final Baza instance = new Baza();
+    public static Baza getInstance() {
         return instance;
     }
-    Map<String, Pies> baza = new HashMap<>();
+    Map<String, Zwierze> baza = new HashMap<>();
 
-    private BazaPsow() { } //konstruktor
+    private Baza() { } //konstruktor
 
-    boolean CzyPiesWBazie(Pies p) {
+    boolean CzyZwierzeWBazie(Zwierze p) {
         return baza.containsKey(p.getNazwa());
     }
 
-    void DodajPsa(Pies p) {
+    void DodajZwierze(Zwierze p) {
         if (p.getNazwa().isEmpty() || p.getOpis().isEmpty())
             throw new IllegalArgumentException();
 
-        if (!CzyPiesWBazie(p))
+        if (!CzyZwierzeWBazie(p))
             baza.put(p.getNazwa(), p);
     }
 
-    void UsunPsa(Pies p) {
-        if (CzyPiesWBazie(p))
+    void UsunZwierze(Zwierze p) {
+        if (CzyZwierzeWBazie(p))
             baza.remove(p.getNazwa());
     }
 
-    void EdytujPsa(Pies p, String nowyOpis) {
+    void EdytujZwierze(Zwierze p, String nowyOpis) {
         if (nowyOpis.equals(""))
             throw new IllegalArgumentException();
 
-        if (CzyPiesWBazie(p))
+        if (CzyZwierzeWBazie(p))
             p.setOpis(nowyOpis);
         else
             throw new IllegalArgumentException();
@@ -79,6 +83,7 @@ class BazaPsow {
 }
 
 //korzystamy z Iteratora w celu przeglądania mapy
+//korzystamy z wbudowanego interfejsu, który ma jedną metodę (zasada I)
 class Quiz implements ActionListener{
     private final int liczba_pytan = 12;
     private final String[] pytania = {"Czy lubisz duże psy?",
@@ -119,9 +124,9 @@ class Quiz implements ActionListener{
     private final JLabel odpC;
     private final JTextArea nazwa;
     private final JTextArea opis;
-    BazaPsow bazaPsow;
+    Baza bazaPsow;
 
-    public Quiz(BazaPsow bp){
+    public Quiz(Baza bp){
         frame = new JFrame("Quiz o pieskach");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 700);
@@ -223,7 +228,7 @@ class Quiz implements ActionListener{
 
     public void nastepnePytanie() {
         if (indeks >= liczba_pytan) {
-            Pies p = WyborRasyZKlucza();
+            Zwierze p = WyborRasyZKlucza();
             wyswietlWynik(p);
         } else {
             textarea.setText((indeks + 1) + ". " + pytania[indeks]);
@@ -258,7 +263,7 @@ class Quiz implements ActionListener{
         }
     }
 
-    public void wyswietlWynik(Pies p) {
+    public void wyswietlWynik(Zwierze p) {
         textarea.setText("Wynik: ");
         nazwa.setText("Nazwa: " + p.getNazwa());
         opis.setText("Opis: " + p.getOpis() + '\n');
@@ -275,19 +280,19 @@ class Quiz implements ActionListener{
         frame.add(buttonRozwiazPonownie);
     }
 
-    Pies WyborRasyZKlucza() {
+    Zwierze WyborRasyZKlucza() {
         int iloscRas = bazaPsow.baza.size();
         int[] LiczbaPunktowRasy = new int[iloscRas];
 
         for (int i = 0; i < iloscRas; i++)
             LiczbaPunktowRasy[i] = 0;
 
-        Iterator<Map.Entry<String, Pies>> itr = bazaPsow.baza.entrySet().iterator();
+        Iterator<Map.Entry<String, Zwierze>> itr = bazaPsow.baza.entrySet().iterator();
         int i = 0;
 
         //dla kazdej rasy zliczamy ile odpowiedzi zgadza się z tymi podanymi przez użytkownika
         while (itr.hasNext()) {
-            Map.Entry<String, Pies> entry = itr.next();
+            Map.Entry<String, Zwierze> entry = itr.next();
             for (int j = 0; j < liczba_pytan; j++) {
                 char odpowiedzUzytkownika = odpowiedzi_uzytkownika.charAt(j);
                 String odpowiedzDlaRasy = entry.getValue().getKlucz_odpowiedzi(j);
@@ -324,7 +329,7 @@ class Quiz implements ActionListener{
         indeksPsa = RasyZMaxIlosciaPunktow[indeksPsa];
 
         i = 0;
-        Pies p = null;
+        Zwierze p = null;
         itr = bazaPsow.baza.entrySet().iterator();
         while (itr.hasNext()) {
             if (i == indeksPsa) {
@@ -341,7 +346,7 @@ class Quiz implements ActionListener{
 
 public class DopasujPsa {
     public static void main(String[] args){
-        BazaPsow bp = BazaPsow.getInstance();
+        Baza bp = Baza.getInstance();
         //klucze odpowiedzi dla danych ras
 
         String[] koBernardyn =           {"00C", "00C", "0B0", "A00", "ABC", "ABC", "AB0", "0BC", "A00", "00C", "00C", "0BC"};
@@ -372,60 +377,60 @@ public class DopasujPsa {
         String[] koPekinczyk =           {"A00", "ABC", "A00", "ABC", "A00", "ABC", "ABC", "0BC", "A00", "00C", "A00", "000"}; //
         String[] koBuldogFrancuski =     {"A00", "ABC", "0B0", "A00", "ABC", "AB0", "ABC", "0BC", "A00", "0BC", "0B0", "A00"};
 
-        bp.DodajPsa(new Pies("bernardyn", "Olbrzym o wielkim sercu. Kocha ludzi i jest świetnym psem" +
+        bp.DodajZwierze(new Pies("bernardyn", "Olbrzym o wielkim sercu. Kocha ludzi i jest świetnym psem" +
                 " stróżującym. Warto wiedzieć, że jego warczenie przypomina ryk lwa.", koBernardyn));
-        bp.DodajPsa(new Pies("owczarek podhalanski", "Polski miś polarny, który ochroni twoje dzieci, a " +
+        bp.DodajZwierze(new Pies("owczarek podhalanski", "Polski miś polarny, który ochroni twoje dzieci, a " +
                 "gdy będzie potrzeba to stado owiec. Król Gór.", koOwczarekPodhalanski));
-        bp.DodajPsa(new Pies("nowofundland", " Idealny towarzysz rodziny, a w wolnych chwilach " +
+        bp.DodajZwierze(new Pies("nowofundland", " Idealny towarzysz rodziny, a w wolnych chwilach " +
                 "ratownik wodny. Jak kraść to miliony, jak głaskać to jego.", koNowofundland));
-        bp.DodajPsa(new Pies("rottweiler", " Jeżeli masz w domu rottweilera, to możesz być pewien, że nawet" +
+        bp.DodajZwierze(new Pies("rottweiler", " Jeżeli masz w domu rottweilera, to możesz być pewien, że nawet" +
                 " listonosz nie dostarczy ci poczty. Jednak dobrze wychowany może być pupilem.", koRottweiler));
-        bp.DodajPsa(new Pies("doberman", "Lepiej nie wchodź na jego teren bez zaproszenia. Może być dobrym " +
+        bp.DodajZwierze(new Pies("doberman", "Lepiej nie wchodź na jego teren bez zaproszenia. Może być dobrym " +
                 "kompanem ale potrzebuje dobrego wychowania. Pies sportowiec.", koDoberman));
-        bp.DodajPsa(new Pies("akita", "Raczej nie pochwalisz się posłuszeństwem akity przy znajomych, jednak " +
+        bp.DodajZwierze(new Pies("akita", "Raczej nie pochwalisz się posłuszeństwem akity przy znajomych, jednak " +
                 "jest bardzo wierny. Znasz Hachiko? To właśnie on.", koAkita));
-        bp.DodajPsa(new Pies("labrador", "Żołądek na czterech łapach. Bardzo uniwersalny - pobawi się z " +
+        bp.DodajZwierze(new Pies("labrador", "Żołądek na czterech łapach. Bardzo uniwersalny - pobawi się z " +
                 "dziećmi, pójdzie z tobą na jogging, ale na pewno nie przypilnuje ci domu.",
                 koLabrador));
-        bp.DodajPsa(new Pies("samoyed", "Wrażliwy pieszczoch, wygląda jak wiecznie uśmiechnięta chmurka. " +
+        bp.DodajZwierze(new Pies("samoyed", "Wrażliwy pieszczoch, wygląda jak wiecznie uśmiechnięta chmurka. " +
                 "Cały czas szczeka, więc nikt go nie bierze na poważnie.", koSamoyed));
-        bp.DodajPsa(new Pies("border collie", "Pochodzi z inteligencji. Jak chcesz żeby poczytał Ci książke albo " +
+        bp.DodajZwierze(new Pies("border collie", "Pochodzi z inteligencji. Jak chcesz żeby poczytał Ci książke albo " +
                 "zdał za ciebie egzamin to jest to dobry wybor. Jak ci nie przeszkadza że ma więcej IQ niż ty to ok.", koBorderCollie));
-        bp.DodajPsa(new Pies("owczarek niemiecki", "Jeśli jesteś typem kanapowca to raczej się nie dogadacie. " +
+        bp.DodajZwierze(new Pies("owczarek niemiecki", "Jeśli jesteś typem kanapowca to raczej się nie dogadacie. " +
                 "Sportowiec inteligent, więc na pewno nie dres.", koOwczarekNiemiecki));
-        bp.DodajPsa(new Pies("corgi", "Jest to typ królewski. Dawniej pilnował stada, teraz woli pieszczoty. " +
+        bp.DodajZwierze(new Pies("corgi", "Jest to typ królewski. Dawniej pilnował stada, teraz woli pieszczoty. " +
                 "Nie lubi nudy", koCorgi));
-        bp.DodajPsa(new Pies("golden retriever", "Psy tej rasy mają nie tylko złotą sierść, ale i charakter. " +
+        bp.DodajZwierze(new Pies("golden retriever", "Psy tej rasy mają nie tylko złotą sierść, ale i charakter. " +
                 "To doskonały towarzysz, zarówno w pracy jak i w domu.", koGoldenRetriever));
-        bp.DodajPsa(new Pies("chow chow", "Wiedzie spokojne życie. Ten pies z niebieskim jęzorem woli spanko niż" +
+        bp.DodajZwierze(new Pies("chow chow", "Wiedzie spokojne życie. Ten pies z niebieskim jęzorem woli spanko niż" +
                 " zabawę. Jak go dotkniesz to będziesz w niebie.", koChowChow));
-        bp.DodajPsa(new Pies("pudel", " Jego zaletą jest szlachetny wygląd oraz milion IQ. Nadaje się właściwie" +
+        bp.DodajZwierze(new Pies("pudel", " Jego zaletą jest szlachetny wygląd oraz milion IQ. Nadaje się właściwie" +
                 " dla każdego." ,koPudel));
-        bp.DodajPsa(new Pies("beagle", " Nie za duży, nie za mały. Jest gończym psem, ale w odróżnieniu od innych" +
+        bp.DodajZwierze(new Pies("beagle", " Nie za duży, nie za mały. Jest gończym psem, ale w odróżnieniu od innych" +
                 " gończych, beagle przywiązuje się do właściciela.", koBeagle));
-        bp.DodajPsa(new Pies("husky", " Cechują go niebieskie oczy. Pochodzi z Syberii(zimiara), ma ADHD, więc" +
+        bp.DodajZwierze(new Pies("husky", " Cechują go niebieskie oczy. Pochodzi z Syberii(zimiara), ma ADHD, więc" +
                 " wykorzystuję się go do zaprzęgów.", koHusky));
-        bp.DodajPsa(new Pies("dalmatynczyk", " Krówka wśród psów. Jest bardzo energiczny więc nie potrzebujesz " +
+        bp.DodajZwierze(new Pies("dalmatynczyk", " Krówka wśród psów. Jest bardzo energiczny więc nie potrzebujesz " +
                 "ich 101 - wystarczy jeden.", koDalmatynczyk));
-        bp.DodajPsa(new Pies("york", "Poręczny, można go schować do torebki. Odważny do tego stopnia, że nie " +
+        bp.DodajZwierze(new Pies("york", "Poręczny, można go schować do torebki. Odważny do tego stopnia, że nie " +
                 "czuje respektu przed dużymi psami.", koYork));
-        bp.DodajPsa(new Pies("shiba", " Uparty, czasem lubi sobie warknąć. Jeśli chcesz zacząć karierę w " +
+        bp.DodajZwierze(new Pies("shiba", " Uparty, czasem lubi sobie warknąć. Jeśli chcesz zacząć karierę w " +
                 "internecie, to pamiętaj, że nigdy mu nie dorównasz.", koShiba));
-        bp.DodajPsa(new Pies("chihuahua","Duży pies w niewielkim opakowaniu, jeśli nie chcesz by cały czas " +
+        bp.DodajZwierze(new Pies("chihuahua","Duży pies w niewielkim opakowaniu, jeśli nie chcesz by cały czas " +
                 "szczekał, to poświęć mu trochę uwagi(lubi szczekać)", koChihuahua));
-        bp.DodajPsa(new Pies("mops", "Jak nie lubisz dużo chodzić to dobrze, bo mops też nie. Podczas twojej" +
+        bp.DodajZwierze(new Pies("mops", "Jak nie lubisz dużo chodzić to dobrze, bo mops też nie. Podczas twojej" +
                 " nieobecności będzie głównie spać.", koMops));
-        bp.DodajPsa(new Pies("jamnik", "ylko 1/3 szczeniaków przeznaczana jest na psy domowe(reszta poluje). " +
+        bp.DodajZwierze(new Pies("jamnik", "ylko 1/3 szczeniaków przeznaczana jest na psy domowe(reszta poluje). " +
                 "Jak jesteś fanem parówek, to jest to pies dla ciebie.", koJamnik));
-        bp.DodajPsa(new Pies("pomeranian", "Znajdzie se faworyta, którego nie odstąpi na krok i będzie " +
+        bp.DodajZwierze(new Pies("pomeranian", "Znajdzie se faworyta, którego nie odstąpi na krok i będzie " +
                 "domagał się należnych mu pieszczot. Mały, ale potrzebuje dużo miłości.", koPomeranian));
-        bp.DodajPsa(new Pies("maltanczyk", "Jest delikatny i biały, więc uważaj bo łatwo się brudzi. Mimo " +
+        bp.DodajZwierze(new Pies("maltanczyk", "Jest delikatny i biały, więc uważaj bo łatwo się brudzi. Mimo " +
                 "małego rozmiaru, jego serce jest ogromne.", koMaltanczyk));
-        bp.DodajPsa(new Pies("jack russel terrier", "Mały i słodki piesek, ale niech was to nie zmyli, niezły " +
+        bp.DodajZwierze(new Pies("jack russel terrier", "Mały i słodki piesek, ale niech was to nie zmyli, niezły " +
                 "z niego rozrabiaka. Ma mięśnie jak skały, fale się rozbijały.", koJackRusselTerrier));
-        bp.DodajPsa(new Pies("pekinczyk", "Wygląda trochę jak mały lew. Bardzo mało mówi, ale bardzo ładnie " +
+        bp.DodajZwierze(new Pies("pekinczyk", "Wygląda trochę jak mały lew. Bardzo mało mówi, ale bardzo ładnie " +
                 "milczy.", koPekinczyk));
-        bp.DodajPsa(new Pies("buldog francuski", "Uwodziciel z uszami nietoperza. Lubi spanko podczas którego " +
+        bp.DodajZwierze(new Pies("buldog francuski", "Uwodziciel z uszami nietoperza. Lubi spanko podczas którego " +
                 "zdarza mu się chrapać.(chrapie głośniej niż twój stary)", koBuldogFrancuski));
 
         Quiz quiz = new Quiz(bp);
