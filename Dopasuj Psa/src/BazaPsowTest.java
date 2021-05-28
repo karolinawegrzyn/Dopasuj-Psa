@@ -3,7 +3,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class BazaPsowTest {
-    BazaPsow bp;
+    Baza bp;
     Pies p, pDodany;
     String nazwa;
     String opis;
@@ -11,24 +11,24 @@ public class BazaPsowTest {
 
     @Before
     public void setUp() {
-        bp = BazaPsow.getInstance();
+        bp = Baza.getInstance();
         p = new Pies("labrador", "fajny pies", kluczodp);
         pDodany = new Pies("samoyed", "pies idealny", kluczodp);
-        bp.DodajPsa(pDodany);
+        bp.DodajZwierze(pDodany);
         nazwa = "labrador";
         opis = "fajny pies";
     }
 
     @Test
     public void DodawaniePsaTest() {
-        bp.DodajPsa(p);
+        bp.DodajZwierze(p);
         boolean CzyPsaDodano = bp.baza.containsKey("labrador");
         Assert.assertTrue(CzyPsaDodano);
     }
 
     @Test
     public void UsuwaniePsaTest() {
-        bp.UsunPsa(pDodany);
+        bp.UsunZwierze(pDodany);
         boolean CzyPsaUsunieto = bp.baza.containsKey("samoyed");
         Assert.assertFalse(CzyPsaUsunieto);
     }
@@ -36,37 +36,37 @@ public class BazaPsowTest {
     @Test
     public void EdytowaniePsaTest() {
         String nowyOpis = "bardzo fajny pies";
-        bp.EdytujPsa(pDodany, nowyOpis);
+        bp.EdytujZwierze(pDodany, nowyOpis);
         Assert.assertEquals(pDodany.getOpis(), nowyOpis);
     }
 
     @Test
     public void CzyPiesWBazieTest() {
-        boolean CzyPiesWbp = bp.CzyPiesWBazie(pDodany);
+        boolean CzyPiesWbp = bp.CzyZwierzeWBazie(pDodany);
         Assert.assertTrue(CzyPiesWbp);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void EdytowaniePsaNieZBazy() {
-        bp.UsunPsa(p);
+        bp.UsunZwierze(p);
         String nowyOpis = "bardzo fajny pies";
-        bp.EdytujPsa(p, nowyOpis);
+        bp.EdytujZwierze(p, nowyOpis);
         Assert.assertEquals(p.getOpis(), nowyOpis);
     }
 
     @Test
     public void UsuwaniePsaNieZBazy() {
-        bp.UsunPsa(p);
+        bp.UsunZwierze(p);
     }
 
     @Test
     public void DodawanieDuplikatu(){
-        bp.DodajPsa(p);
-        bp.DodajPsa(p);
+        bp.DodajZwierze(p);
+        bp.DodajZwierze(p);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void EdycjaPustymOpisu(){
-        bp.EdytujPsa(pDodany, "");
+        bp.EdytujZwierze(pDodany, "");
     }
 }
